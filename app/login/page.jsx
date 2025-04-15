@@ -4,85 +4,69 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-// Mock users for demo
-const mockUsers = [
-  {
-    id: 1,
-    email: "user@example.com",
-    password: "password",
-    name: "John Doe",
-    role: "user",
-    profilePic: "/placeholder.svg?height=80&width=80",
-  },
-  {
-    id: 2,
-    email: "admin@example.com",
-    password: "admin123",
-    name: "Admin User",
-    role: "admin",
-    profilePic: "/placeholder.svg?height=80&width=80",
-  },
-]
 
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError("")
+    setIsLoading(true)
 
     // Simple validation
     if (!email || !password) {
       setError("Please enter both email and password")
+      setIsLoading(false)
       return
     }
 
-    // Check credentials against mock users
-    const user = mockUsers.find((u) => u.email === email && u.password === password)
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
 
-    if (user) {
-      // Set login state
-      localStorage.setItem("isLoggedIn", "true")
-      localStorage.setItem("userData", JSON.stringify(user))
+      const data = await response.json()
 
-      // Check for pending order
-      const pendingOrder = localStorage.getItem("pendingOrder")
-
-      if (pendingOrder) {
-        // Add user ID to order and save
-        const orderData = JSON.parse(pendingOrder)
-        orderData.userId = user.id
-        orderData.status = "pending"
-        orderData.orderId = `ORD-${Date.now()}`
-        orderData.date = new Date().toISOString()
-
-        // Save to orders
-        const orders = JSON.parse(localStorage.getItem("orders") || "[]")
-        orders.push(orderData)
-        localStorage.setItem("orders", JSON.stringify(orders))
-
-        // Clear pending order
-        localStorage.removeItem("pendingOrder")
-
-        // Redirect to dashboard
-        router.push("/dashboard")
-      } else {
-        // Redirect based on role
-        if (user.role === "admin") {
-          router.push("/admin")
-        } else {
-          router.push("/dashboard")
-        }
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed")
       }
-    } else {
-      setError("Invalid email or password")
+
+      // Store user data in localStorage for client-side access
+      localStorage.setItem("isLoggedIn", "true")
+      localStorage.setItem("userData", JSON.stringify(data.user))
+
+      // Show success notification
+      toast.success("Login Successful", {
+        description: `Welcome back, ${data.user.name}!`,
+      })
+
+      // Redirect based on role
+      if (data.user.role === "admin") {
+        router.push("/admin")
+      } else {
+        router.push("/dashboard")
+      }
+    } catch (error) {
+      setError(error.message)
+      toast.error("Login Failed", {
+        description: error.message,
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -99,6 +83,7 @@ export default function LoginPage() {
         <div className="flex flex-col space-y-2 text-center">
           <div className="flex items-center justify-center">
             <Image src="/logo.png" alt="Unique Topup A" width={150} height={40} className="h-10 w-auto" />
+            <span className="ml-2 font-bold text-blue-600">Unique Topup A</span>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">Login to your account</h1>
           <p className="text-sm text-muted-foreground">Enter your credentials below to login</p>
@@ -124,6 +109,7 @@ export default function LoginPage() {
                   autoCapitalize="none"
                   autoComplete="email"
                   autoCorrect="off"
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -133,7 +119,13 @@ export default function LoginPage() {
                     Forgot password?
                   </Link>
                 </div>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                />
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox id="remember" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(checked)} />
@@ -144,8 +136,8 @@ export default function LoginPage() {
                   Remember me
                 </label>
               </div>
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                Login
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+                {isLoading ? "Logging in..." : "Login"}
               </Button>
             </div>
           </form>

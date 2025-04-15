@@ -7,7 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -76,8 +76,7 @@ export default function ProfilePage() {
     // Update state
     setUser(updatedUser)
 
-    toast({
-      title: "Profile Updated",
+    toast.success("Profile Updated", {
       description: "Your profile has been updated successfully",
     })
   }
@@ -87,10 +86,8 @@ export default function ProfilePage() {
 
     // Check if email is valid
     if (!formData.email) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Please enter a valid email",
-        variant: "destructive",
       })
       return
     }
@@ -112,8 +109,7 @@ export default function ProfilePage() {
     // Update state
     setUser(updatedUser)
 
-    toast({
-      title: "Email Updated",
+    toast.success("Email Updated", {
       description: "Your email has been updated successfully",
     })
   }
@@ -123,28 +119,22 @@ export default function ProfilePage() {
 
     // Validate passwords
     if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Please fill in all password fields",
-        variant: "destructive",
       })
       return
     }
 
     if (formData.currentPassword !== user.password) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Current password is incorrect",
-        variant: "destructive",
       })
       return
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "New passwords do not match",
-        variant: "destructive",
       })
       return
     }
@@ -174,8 +164,7 @@ export default function ProfilePage() {
       confirmPassword: "",
     })
 
-    toast({
-      title: "Password Updated",
+    toast.success("Password Updated", {
       description: "Your password has been updated successfully",
     })
   }
@@ -224,8 +213,7 @@ export default function ProfilePage() {
                 localStorage.removeItem("isLoggedIn")
                 localStorage.removeItem("userData")
                 router.push("/")
-                toast({
-                  title: "Logged Out",
+                toast.success("Logged Out", {
                   description: "You have been successfully logged out",
                 })
               }}

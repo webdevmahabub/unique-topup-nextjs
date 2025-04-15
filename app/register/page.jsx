@@ -4,11 +4,11 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { toast } from "@/components/ui/use-toast"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -20,6 +20,7 @@ export default function RegisterPage() {
     agreeTerms: false,
   })
   const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -30,63 +31,68 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, agreeTerms: checked }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError("")
+    setIsLoading(true)
 
     // Simple validation
     if (!formData.name || !formData.email || !formData.password) {
       setError("Please fill in all required fields")
+      setIsLoading(false)
       return
     }
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
+      setIsLoading(false)
       return
     }
 
     if (!formData.agreeTerms) {
       setError("You must agree to the terms and conditions")
+      setIsLoading(false)
       return
     }
 
-    // In a real app, you would send this data to an API
-    // For demo, we'll just save to localStorage
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
+      })
 
-    // Create new user
-    const newUser = {
-      id: Date.now(),
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      role: "user",
-      profilePic: "/placeholder.svg?height=80&width=80",
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Registration failed")
+      }
+
+      // Store user data in localStorage for client-side access
+      localStorage.setItem("isLoggedIn", "true")
+      localStorage.setItem("userData", JSON.stringify(data.user))
+
+      // Show success notification
+      toast.success("Registration Successful", {
+        description: "Your account has been created successfully!",
+      })
+
+      // Redirect to dashboard
+      router.push("/dashboard")
+    } catch (error) {
+      setError(error.message)
+      toast.error("Registration Failed", {
+        description: error.message,
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    // Get existing users or create empty array
-    const existingUsers = JSON.parse(localStorage.getItem("users") || "[]")
-
-    // Check if email already exists
-    if (existingUsers.some((user) => user.email === formData.email)) {
-      setError("Email already in use")
-      return
-    }
-
-    // Add new user
-    existingUsers.push(newUser)
-    localStorage.setItem("users", JSON.stringify(existingUsers))
-
-    // Set as logged in
-    localStorage.setItem("isLoggedIn", "true")
-    localStorage.setItem("userData", JSON.stringify(newUser))
-
-    // Show success notification
-    toast({
-      title: "Registration Successful",
-      description: "Your account has been created successfully!",
-    })
-
-    // Redirect to dashboard
-    router.push("/dashboard")
   }
 
   return (
@@ -101,7 +107,8 @@ export default function RegisterPage() {
       <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
         <div className="flex flex-col space-y-2 text-center">
           <div className="flex items-center justify-center">
-            <Image src="/logo.png" alt="Unique Topup" width={150} height={40} className="h-10 w-auto" />
+            <Image src="/logo.png" alt="Unique Topup A" width={150} height={40} className="h-10 w-auto" />
+            <span className="ml-2 font-bold text-blue-600">Unique Topup A</span>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
           <p className="text-sm text-muted-foreground">Enter your information below to create your account</p>
@@ -127,6 +134,7 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   autoCapitalize="none"
                   autoCorrect="off"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -142,6 +150,7 @@ export default function RegisterPage() {
                   autoCapitalize="none"
                   autoComplete="email"
                   autoCorrect="off"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -153,6 +162,7 @@ export default function RegisterPage() {
                   type="password"
                   value={formData.password}
                   onChange={handleChange}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -164,6 +174,7 @@ export default function RegisterPage() {
                   type="password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -180,8 +191,8 @@ export default function RegisterPage() {
                 </label>
               </div>
 
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                Register
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+                {isLoading ? "Creating Account..." : "Register"}
               </Button>
             </div>
           </form>

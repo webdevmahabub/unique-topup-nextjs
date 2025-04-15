@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -14,12 +15,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { toast } from "@/components/ui/use-toast"
 
 export default function Header() {
   const router = useRouter()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     // Check if user is logged in
@@ -27,17 +28,26 @@ export default function Header() {
     setIsLoggedIn(loggedIn)
 
     if (loggedIn) {
+      // Get user data from localStorage
       const userData = JSON.parse(localStorage.getItem("userData") || "{}")
       setUser(userData)
     }
+
+    setIsLoading(false)
   }, [])
 
   const handleLogout = () => {
+    // Clear user data
     localStorage.removeItem("isLoggedIn")
     localStorage.removeItem("userData")
+
     setIsLoggedIn(false)
     setUser(null)
+
     router.push("/")
+    toast.success("Logged Out", {
+      description: "You have been successfully logged out",
+    })
   }
 
   return (
@@ -47,6 +57,7 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <Image src="/logo.png" alt="Unique Topup A" width={100} height={30} className="h-8 w-auto" />
+            <span className="ml-2 font-bold text-blue-600">Unique Topup A</span>
           </Link>
 
           {/* Search */}
@@ -61,7 +72,9 @@ export default function Header() {
 
           {/* Auth Buttons or User Menu */}
           <div className="flex items-center space-x-2">
-            {isLoggedIn && user ? (
+            {isLoading ? (
+              <div className="h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
+            ) : isLoggedIn && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 
 export default function OrdersPage() {
   const router = useRouter()
@@ -92,8 +92,7 @@ export default function OrdersPage() {
                 localStorage.removeItem("isLoggedIn")
                 localStorage.removeItem("userData")
                 router.push("/")
-                toast({
-                  title: "Logged Out",
+                toast.success("Logged Out", {
                   description: "You have been successfully logged out",
                 })
               }}

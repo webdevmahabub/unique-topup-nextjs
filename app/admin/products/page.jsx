@@ -7,6 +7,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
 
 // Initial product data (in a real app, this would come from an API/database)
 const initialProductData = {
@@ -132,7 +133,9 @@ export default function AdminProducts() {
   const handleAddProduct = () => {
     // Validate form
     if (!newProduct.id || !newProduct.title || !newProduct.description) {
-      alert("Please fill in all required fields")
+      toast.error("Please fill in all required fields", {
+        description: "Product ID, Title and Description are required.",
+      })
       return
     }
 
@@ -141,7 +144,9 @@ export default function AdminProducts() {
 
     // Check if product ID already exists
     if (products[productId]) {
-      alert("A product with this ID already exists")
+      toast.error("A product with this ID already exists", {
+        description: "Please choose a different Product ID.",
+      })
       return
     }
 
@@ -169,6 +174,9 @@ export default function AdminProducts() {
       packages: [],
     })
     setShowAddProduct(false)
+    toast.success("Product added successfully!", {
+      description: `Product "${newProduct.title}" has been added.`,
+    })
   }
 
   // Handle updating a product
@@ -177,7 +185,9 @@ export default function AdminProducts() {
 
     // Validate form
     if (!selectedProduct.title || !selectedProduct.description) {
-      alert("Please fill in all required fields")
+      toast.error("Please fill in all required fields", {
+        description: "Product Title and Description are required.",
+      })
       return
     }
 
@@ -193,6 +203,9 @@ export default function AdminProducts() {
 
     // Close modal
     setShowEditProduct(false)
+    toast.success("Product updated successfully!", {
+      description: `Product "${selectedProduct.title}" has been updated.`,
+    })
   }
 
   // Handle deleting a product
@@ -210,6 +223,9 @@ export default function AdminProducts() {
     if (selectedProduct && selectedProduct.id === productId) {
       setSelectedProduct(null)
     }
+    toast.success("Product deleted successfully!", {
+      description: `Product "${deletedProduct.title}" has been deleted.`,
+    })
   }
 
   // Handle adding a package to a product
@@ -218,7 +234,9 @@ export default function AdminProducts() {
 
     // Validate form
     if (!newPackage.name || newPackage.price <= 0) {
-      alert("Please fill in all required fields with valid values")
+      toast.error("Please fill in all required fields with valid values", {
+        description: "Package Name is required and Price must be greater than 0.",
+      })
       return
     }
 
@@ -257,6 +275,9 @@ export default function AdminProducts() {
       formattedPrice: "",
     })
     setShowAddPackage(false)
+    toast.success("Package added successfully!", {
+      description: `Package "${newPackage.name}" has been added to "${selectedProduct.title}".`,
+    })
   }
 
   // Handle updating a package
@@ -265,7 +286,9 @@ export default function AdminProducts() {
 
     // Validate form
     if (!selectedPackage.name || selectedPackage.price <= 0) {
-      alert("Please fill in all required fields with valid values")
+      toast.error("Please fill in all required fields with valid values", {
+        description: "Package Name is required and Price must be greater than 0.",
+      })
       return
     }
 
@@ -301,6 +324,9 @@ export default function AdminProducts() {
     // Reset and close modal
     setSelectedPackage(null)
     setShowEditPackage(false)
+    toast.success("Package updated successfully!", {
+      description: `Package "${selectedPackage.name}" has been updated in "${selectedProduct.title}".`,
+    })
   }
 
   // Handle deleting a package
@@ -333,6 +359,9 @@ export default function AdminProducts() {
       setSelectedPackage(null)
       setShowEditPackage(false)
     }
+    toast.success("Package deleted successfully!", {
+      description: "Package has been deleted.",
+    })
   }
 
   if (isLoading) {
